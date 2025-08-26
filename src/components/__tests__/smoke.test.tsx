@@ -4,5 +4,6 @@ import SprintBoard from '../SprintBoard';
 
 test('renders sprint board header', () => {
   const { getByText } = render(<SprintBoard />);
-  expect(getByText(/Sprint Board Lite/i)).toBeTruthy();
+  const node = getByText(/Sprint Board Lite/i);
+  if (!node) throw new Error('Sprint Board header not found');
 });

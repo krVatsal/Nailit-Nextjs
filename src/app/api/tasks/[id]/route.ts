@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { store, maybeFail } from "../store";
 
-export async function PATCH(req: Request, { params }: { params: { id: string } }) {
+export async function PATCH(req: Request, context: any) {
+  const { params } = context;
   const { id } = params;
   const body = await req.json();
   if (maybeFail()) return NextResponse.json({ message: "Simulated failure" }, { status: 500 });
@@ -11,7 +12,8 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   return NextResponse.json(store[idx]);
 }
 
-export async function DELETE(req: Request, { params }: { params: { id: string } }) {
+export async function DELETE(req: Request, context: any) {
+  const { params } = context;
   const { id } = params;
   if (maybeFail()) return NextResponse.json({ message: "Simulated failure" }, { status: 500 });
   const idx = store.findIndex((t) => t.id === id);
