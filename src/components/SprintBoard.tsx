@@ -51,6 +51,17 @@ export default function SprintBoard() {
     };
   }, []);
 
+  // ensure any pending undo timer is cleared on unmount
+  useEffect(() => {
+    return () => {
+      if (undo) {
+        try {
+          window.clearTimeout(undo.timerId);
+        } catch {}
+      }
+    };
+  }, [undo]);
+
   useEffect(() => {
     // apply persisted theme
     try {
@@ -121,14 +132,16 @@ export default function SprintBoard() {
   async function onDrop(e: React.DragEvent, newStatus: ColumnId) {
     e.preventDefault();
     const id = e.dataTransfer.getData("text/plain");
-    const prev = tasks;
-    const next = tasks.map((t) => (t.id === id ? { ...t, status: newStatus } : t));
-    setTasks(next);
+  // snapshot previous state (clone to avoid accidental mutation)
+  const prev = tasks.map((t) => ({ ...t }));
+  const next = tasks.map((t) => (t.id === id ? { ...t, status: newStatus } : t));
+  setTasks(next);
 
     // schedule undo for 5s
-    const moved = tasks.find((t) => t.id === id);
-    const oldStatus = moved?.status || ("todo" as ColumnId);
-    scheduleUndo(id, prev, oldStatus);
+  const moved = tasks.find((t) => t.id === id);
+  const oldStatus = moved?.status || ("todo" as ColumnId);
+  // pass a cloned snapshot to undo so rollbacks are deterministic
+  scheduleUndo(id, prev, oldStatus);
 
     try {
       await doServerUpdate(id, newStatus);
@@ -139,7 +152,10 @@ export default function SprintBoard() {
         window.clearTimeout(undo.timerId);
         setUndo(null);
       }
-      alert("Failed to update task on server. Reverting change.");
+      console.error("Failed to update task on server:", err);
+      setError("Failed to update task on server. Change reverted.");
+      // auto-clear error after a short while
+      window.setTimeout(() => setError(null), 4000);
     }
   }
 
@@ -147,19 +163,21 @@ export default function SprintBoard() {
     if (!undo) return;
     const { id, prevTasks, oldStatus, timerId } = undo;
     window.clearTimeout(timerId);
-    setTasks(prevTasks);
+    setTasks(prevTasks.map((t) => ({ ...t })));
     setUndo(null);
     try {
       await doServerUpdate(id, oldStatus);
     } catch (e) {
-      alert("Failed to revert move on server.");
+      console.error("Failed to revert move on server:", e);
+      setError("Failed to revert move on server.");
+      window.setTimeout(() => setError(null), 4000);
     }
   }
 
   async function createTask(payload: { title: string; description?: string; priority?: any }) {
-    const tempId = `temp-${uid()}`;
-    const tempTask: Task = { id: tempId, title: payload.title, description: payload.description, priority: payload.priority, status: "todo" };
-    setTasks((s) => [tempTask, ...s]);
+  const tempId = `temp-${uid()}`;
+  const tempTask: Task = { id: tempId, title: payload.title, description: payload.description, priority: payload.priority, status: "todo" };
++  setTasks((s) => [tempTask, ...s]);
     setModalOpen(false);
 
     try {
@@ -173,7 +191,9 @@ export default function SprintBoard() {
       setTasks((s) => s.map((t) => (t.id === tempId ? created : t)));
     } catch (e) {
       setTasks((s) => s.filter((t) => t.id !== tempId));
-      alert("Failed to create task on server.");
+      console.error("Failed to create task on server:", e);
+      setError("Failed to create task on server.");
+      window.setTimeout(() => setError(null), 4000);
     }
   }
 
@@ -185,7 +205,9 @@ export default function SprintBoard() {
       if (!res.ok) throw new Error("Delete failed");
     } catch (e) {
       setTasks(prev);
-      alert("Failed to delete task on server.");
+      console.error("Failed to delete task on server:", e);
+      setError("Failed to delete task on server.");
+      window.setTimeout(() => setError(null), 4000);
     }
   }
 
@@ -223,6 +245,13 @@ export default function SprintBoard() {
 
   return (
     <div className="px-4 py-6 max-w-6xl mx-auto">
+      {/* Error banner for non-blocking feedback */}
+      {error ? (
+        <div className="mb-4 p-3 rounded bg-red-50 text-red-800 border border-red-100 flex items-center justify-between">
+          <div className="text-sm">{error}</div>
+          <button onClick={() => setError(null)} className="text-xs underline">Dismiss</button>
+        </div>
+      ) : null}
       <header className="mb-4 flex items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <h1 className="text-lg font-semibold">Sprint Board Lite</h1>

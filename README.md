@@ -1,4 +1,4 @@
-Sprint Board Lite — Nailit-Nextjs
+Sprint Board Lite
 
 Overview
 

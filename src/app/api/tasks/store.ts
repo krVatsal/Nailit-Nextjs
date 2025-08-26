@@ -1,4 +1,4 @@
-type Task = { id: string; title: string; description?: string; priority?: string; status: string };
+export type Task = { id: string; title: string; description?: string; priority?: string; status: string };
 
 export const store: Task[] = [
   { id: "t1", title: "Setup project repo", status: "todo", priority: "medium" },

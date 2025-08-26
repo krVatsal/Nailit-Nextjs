@@ -8,6 +8,9 @@ export async function GET() {
 
 export async function POST(req: Request) {
   const body = await req.json();
+  if (!body || typeof body.title !== "string" || !body.title.trim()) {
+    return NextResponse.json({ message: "Invalid payload" }, { status: 400 });
+  }
   if (maybeFail()) return NextResponse.json({ message: "Simulated failure" }, { status: 500 });
   const id = Math.random().toString(36).slice(2, 9);
   const task = { id, title: body.title, description: body.description || "", priority: body.priority || "medium", status: "todo" };

@@ -5,6 +5,9 @@ export async function PATCH(req: Request, context: any) {
   const { params } = context;
   const { id } = params;
   const body = await req.json();
+  if (!body || (body.status && !["todo", "inprogress", "done"].includes(body.status))) {
+    return NextResponse.json({ message: "Invalid payload" }, { status: 400 });
+  }
   if (maybeFail()) return NextResponse.json({ message: "Simulated failure" }, { status: 500 });
   const idx = store.findIndex((t) => t.id === id);
   if (idx === -1) return NextResponse.json({ message: "Not found" }, { status: 404 });
@@ -18,6 +21,6 @@ export async function DELETE(req: Request, context: any) {
   if (maybeFail()) return NextResponse.json({ message: "Simulated failure" }, { status: 500 });
   const idx = store.findIndex((t) => t.id === id);
   if (idx === -1) return NextResponse.json({ message: "Not found" }, { status: 404 });
-  const [removed] = store.splice(idx, 1);
-  return NextResponse.json(removed);
+  store.splice(idx, 1);
+  return new NextResponse(null, { status: 204 });
 }
