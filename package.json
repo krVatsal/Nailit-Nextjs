@@ -8,6 +8,7 @@
     "start": "next start"
   },
   "dependencies": {
+    "@testing-library/react": "^16.3.0",
     "framer-motion": "^12.23.12",
     "next": "15.5.0",
     "react": "19.1.0",
@@ -15,6 +16,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@types/mocha": "^10.0.10",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

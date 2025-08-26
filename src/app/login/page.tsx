@@ -12,11 +12,13 @@ export default function LoginPage() {
   function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!email.trim() || !password.trim()) {
-+      setError("Enter email and password");
+      setError("Enter email and password");
       return;
     }
     // mocked auth
-    localStorage.setItem("token", "fake-token");
+    try {
+      localStorage.setItem("token", "fake-token");
+    } catch {}
     router.push("/board");
   }
 
@@ -26,7 +28,7 @@ export default function LoginPage() {
       <form onSubmit={submit} className="flex flex-col gap-2">
         <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" className="px-3 py-2 border rounded" />
         <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Password" className="px-3 py-2 border rounded" />
-+        {error ? <div className="text-sm text-red-500">{error}</div> : null}
+        {error ? <div className="text-sm text-red-500">{error}</div> : null}
         <div className="flex gap-2 mt-2">
           <button type="submit" className="px-3 py-2 bg-foreground text-background rounded">Login</button>
         </div>
